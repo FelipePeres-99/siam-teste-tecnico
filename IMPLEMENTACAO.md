@@ -103,8 +103,11 @@ npm run start:api           # Terminal 3
 **Principais prompts:**
 
 > "Analise este sistema SIAM com arquitetura de microserviços e me ajude a entender o fluxo de comunicação entre API, Middleware e Device-comm para implementar duas novas funcionalidades..."
+ 
 > "Como implementar um endpoint REST que retorna todos os acessos de um usuário específico em um prédio específico, seguindo a arquitetura existente com RPC via RabbitMQ?"
+
 > "Como criar um endpoint que abre todas as portas de um prédio, enviando comandos para o serviço device-comm via mensageria?"
+
 > "Estou tendo erro 'column User.first_name does not exist' no TypeORM. Como debugar problemas de conexão com PostgreSQL em ambiente Docker?"
 
 ## 4. Questão Bônus: Problemas com Constantes no Middleware
@@ -143,5 +146,3 @@ Funcionalidades implementadas com sucesso:
 *   ✅ Compilação funciona na primeira execução
 
 **Desenvolvedor:** Felipe
-**Data de conclusão:** 16/02/2026
-**Status:** ✅ Completo e testado
