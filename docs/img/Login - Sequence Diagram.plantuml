@@ -1,0 +1,32 @@
+@startuml
+autonumber
+actor User
+participant "API" as Api
+participant "Middleware" as Mw
+database "PostgreSQL" as DB
+database "Redis" as Cache
+
+User -> Api: POST /auth/login
+activate Api
+
+note right of Api: API does not access DB directly
+
+Api -> Mw: RPC: AUTH_VALIDATE_CREDENTIALS_CMD
+activate Mw
+Mw -> DB: Find User by Email
+DB --> Mw: User Entity
+Mw -> Mw: Validate Password
+Mw --> Api: User ID & Details
+deactivate Mw
+
+Api -> Api: Generate JWT (Access & Refresh)
+
+Api -> Mw: RPC: AUTH_STORE_REFRESH_TOKEN_CMD
+activate Mw
+Mw -> Cache: SET refresh_token:{id}
+Mw --> Api: Success
+deactivate Mw
+
+Api --> User: 200 OK (Access Token, Refresh Token)
+deactivate Api
+@enduml

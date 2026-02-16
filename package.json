@@ -1,0 +1,22 @@
+{
+  "name": "device-comm-example",
+  "private": true,
+  "workspaces": [
+    "api",
+    "middleware",
+    "device-comm"
+  ],
+  "scripts": {
+    "start:api": "npm run start --workspace=api",
+    "start:middleware": "npm run start --workspace=middleware",
+    "start:device-comm": "npm run start --workspace=device-comm",
+    "debug:api": "npm run debug --workspace=api",
+    "debug:middleware": "npm run debug --workspace=middleware",
+    "debug:device-comm": "npm run debug --workspace=device-comm"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "bcrypt": "^6.0.0",
+    "tsconfig-paths": "^4.2.0"
+  }
+}

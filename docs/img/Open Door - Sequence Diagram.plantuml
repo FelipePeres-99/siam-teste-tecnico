@@ -1,0 +1,53 @@
+@startuml
+autonumber
+actor User
+participant "API" as Api
+database "Redis" as Cache
+participant "Middleware" as Mw
+queue "RabbitMQ" as Broker
+participant "Device-Comm" as DeviceComm
+actor "Door Device" as Device
+
+User -> Api: POST /access/open-door {doorId}
+activate Api
+
+group Authorization (Read from Cache)
+    Api -> Cache: GET User Keys
+    Cache --> Api: Keys
+    Api -> Cache: GET Authorized Readers
+    Cache --> Api: Reader IDs
+    Api -> Api: Check if Key allows Reader
+end
+
+note right of Api
+  <color:red>Shouldn't the Api get the URL from the Cache?</color>
+  This would avoid involving the Middleware in the whole sequence
+end note
+
+alt Authorized
+    Api -> Mw: RPC: DOOR_TRIGGER_OPEN_CMD
+    activate Mw
+    
+    Mw -> Mw: Lookup Device URL (from DB)
+    
+    note right of Mw
+      Middleware decouples logic from drivers.
+      It sends a fire-and-forget event.
+    end note
+    
+    Mw -> Broker: EMIT: DEVICE_EXECUTE_CMD
+    deactivate Mw
+    
+    Api --> User: 202 Accepted (Command Sent)
+    deactivate Api
+
+    Broker -> DeviceComm: Consume Event
+    activate DeviceComm
+    DeviceComm -> Device: HTTP/TCP: Open Command
+    Device --> DeviceComm: Ack
+    deactivate DeviceComm
+
+else Unauthorized
+    Api --> User: 403 Forbidden
+end
+@enduml

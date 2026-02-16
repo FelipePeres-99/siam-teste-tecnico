@@ -1,0 +1,38 @@
+@startuml
+autonumber
+actor Admin
+participant "API" as Api
+participant "Middleware" as Mw
+database "PostgreSQL" as DB
+
+Admin -> Api: POST /access/grant {userId, doorId}
+activate Api
+
+Api -> Mw: RPC: ACCESS_GRANT_CMD
+activate Mw
+
+Mw -> DB: Find Readers for Door
+DB --> Mw: Readers List
+
+group Internal Event (Decoupling)
+    Mw -> Mw: Emit 'check-device-config'
+    note right of Mw
+        Internal Event Emitter prevents 
+        Circular Dependency between 
+        Access/Reader and Device Services
+    end note
+end
+
+Mw -> DB: Find or Create Key for User
+DB --> Mw: Key Entity
+
+loop For each Reader
+    Mw -> DB: INSERT KeyAuthorization
+end
+
+Mw --> Api: Success
+deactivate Mw
+
+Api --> Admin: 201 Created
+deactivate Api
+@enduml

@@ -1,0 +1,70 @@
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+
+@Entity('user')
+export class User {
+  @PrimaryGeneratedColumn({ name: 'user_id' })
+  userId: number;
+
+  @Column({ name: 'building_id' })
+  buildingId: number;
+
+  @Column({ name: 'first_name' })
+  firstName: string;
+
+  @Column({ name: 'last_name' })
+  lastName: string;
+
+  @Column({ name: 'email', nullable: true })
+  email: string;
+
+  @Column({ name: 'password_hash', nullable: true })
+  passwordHash: string;
+}
+
+@Entity('key')
+export class Key {
+  @PrimaryGeneratedColumn({ name: 'key_id' })
+  keyId: number;
+
+  @Column({ name: 'user_id' })
+  userId: number;
+
+  @Column({ name: 'key_type' })
+  keyType: string;
+}
+
+@Entity('key_authorization')
+export class KeyAuthorization {
+  @Column({ name: 'key_id', primary: true })
+  keyId: number;
+
+  @Column({ name: 'reader_id', primary: true })
+  readerId: number;
+
+  @Column()
+  allowed: boolean;
+}
+
+@Entity('device')
+export class Device {
+  @PrimaryGeneratedColumn({ name: 'device_id' })
+  deviceId: number;
+
+  @Column()
+  url: string;
+}
+
+@Entity('door')
+export class Door {
+  @Column({ name: 'device_id', primary: true })
+  deviceId: number;
+}
+
+@Entity('reader')
+export class Reader {
+  @Column({ name: 'device_id', primary: true })
+  deviceId: number;
+
+  @Column({ name: 'door_device_id' })
+  doorDeviceId: number;
+}

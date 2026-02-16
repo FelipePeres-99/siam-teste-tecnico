@@ -1,0 +1,93 @@
+import { Injectable, Inject, HttpException, InternalServerErrorException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
+import { catchError, throwError, timeout, TimeoutError } from 'rxjs';
+import { ACCESS_GRANT_CMD, DOOR_TRIGGER_OPEN_CMD } from '@siam/common';
+import { LoggerService } from '@siam/types'
+import { DoorService } from '../door/door.service';
+import { UserService } from '../user/user.service';
+import { KeyService } from '../key/key.service';
+import { ConfigService } from '@nestjs/config';
+import { MIDDLEWARE_SERVICE_TOKEN, RMQ_MESSAGE_TIMEOUT_TOKEN } from 'src/constants/tokens.constants';
+
+@Injectable()
+export class AccessService {
+  constructor(
+    @Inject(MIDDLEWARE_SERVICE_TOKEN) private client: ClientProxy,
+     private readonly doorService: DoorService,
+     private readonly userService: UserService,
+     private readonly keyService: KeyService,
+     private readonly logger: LoggerService,
+     private readonly config: ConfigService,
+  ) {}
+
+  grantAccess(userId: number, doorId: number) {
+    this.logger.log(`Granting access (RPC) for User ${userId} on Door ${doorId}`, 'AccessService');
+    return this.client.send({ cmd: ACCESS_GRANT_CMD }, { userId, doorId })
+      .pipe(
+        timeout(this.config.get<number>(RMQ_MESSAGE_TIMEOUT_TOKEN, 5000)),
+        catchError(error => {
+          if (error.status) {
+            return throwError(() => new HttpException(error.message, error.status));
+          }
+          if (error instanceof TimeoutError) {
+            return throwError(() => new HttpException('Middleware Timeout', 504));
+          }
+          return throwError(() => new InternalServerErrorException(error.message || 'Error granting access'));
+        })
+      );
+  }
+
+  async openDoor(userId: number, doorId: number) {
+    this.logger.log(`Checking authorization for User ${userId} on Door ${doorId}`, 'AccessService');
+
+    const readers = await this.doorService.findReadersByDoorId(doorId.toString());
+    if (!readers || readers.length === 0) {
+      throw new NotFoundException('No readers configured for this door or door does not exist.');
+    }
+    const doorReaderIds = new Set(readers.map(r => r.deviceId.toString()));
+
+    const keys = await this.userService.findKeysByUserId(userId);
+    if (!keys || keys.length === 0) {
+      throw new ForbiddenException('User has no keys.');
+    }
+
+    // 3. Check for authorization
+    let allowed = false;
+    for (const key of keys) {
+      // Get the set of reader IDs this key is authorized for
+      const authorizedReaderIds = await this.keyService.findAuthorizedReadersByKeyId(key.keyId.toString());
+      
+      if (!authorizedReaderIds) continue;
+
+      // Check for any intersection between the door's readers and the key's authorized readers
+      for (const readerId of authorizedReaderIds) {
+        if (doorReaderIds.has(readerId.toString())) {
+          allowed = true;
+          break;
+        }
+      }
+      if (allowed) {
+        break;
+      }
+    }
+
+    if (!allowed) {
+      throw new ForbiddenException('User not authorized for this door.');
+    }
+
+    this.logger.log(`User ${userId} is authorized. Sending command to open Door ${doorId}`, 'AccessService');
+    return this.client.send({ cmd: DOOR_TRIGGER_OPEN_CMD }, { doorId })
+      .pipe(
+        timeout(this.config.get<number>(RMQ_MESSAGE_TIMEOUT_TOKEN, 5000)),
+        catchError(error => {
+          if (error.status) {
+            return throwError(() => new HttpException(error.message, error.status));
+          }
+          if (error instanceof TimeoutError) {
+            return throwError(() => new HttpException('Middleware Timeout', 504));
+          }
+          return throwError(() => new InternalServerErrorException(error.message || 'Error opening door'));
+        })
+      );
+  }
+}

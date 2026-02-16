@@ -1,0 +1,14 @@
+export const API_BUILDINGS_PATH = "buildings";
+export const API_BUILDINGS_USERS_PATH_SUFFIX = "users";
+export const API_USERS_PATH = "users";
+export const API_ID_PATH_PARAM = ":id";
+export const API_AUTH_PATH = "auth";
+export const API_AUTH_LOGIN_PATH = "login";
+export const API_AUTH_REFRESH_PATH = "refresh";
+export const API_AUTH_LOGOUT_PATH = "logout";
+export const API_CACHE_PATH = "cache";
+export const API_CACHE_POPULATE_PATH = "populate-cache";
+export const API_ACCESS_PATH = "access";
+export const API_ACCESS_GRANT_PATH = "grant";
+export const API_ACCESS_OPEN_PATH = "open";
+export const API_READERS_PATH = "readers";

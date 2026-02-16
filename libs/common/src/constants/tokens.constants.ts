@@ -1,0 +1,7 @@
+export const REDIS_CLIENT_TOKEN = "REDIS_CLIENT";
+export const LOG_LEVEL_TOKEN = 'LOG_LEVEL';
+export const LOG_FILE_TOKEN = 'LOG_FILE';
+export const ERROR_LOG_FILE_TOKEN = 'ERROR_LOG_FILE';
+export const REDIS_HOST_TOKEN = 'REDIS_HOST';
+export const REDIS_PORT_TOKEN = 'REDIS_PORT';
+export const RABBITMQ_URL_TOKEN = 'RABBITMQ_URL';

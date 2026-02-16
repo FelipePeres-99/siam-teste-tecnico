@@ -1,0 +1,14 @@
+import { Module } from '@nestjs/common';
+import { AccessController } from './access.controller';
+import { AccessService } from './access.service';
+import { KeyModule } from '../key/key.module';
+import { ReaderModule } from '../reader/reader.module';
+import { DeviceModule } from '../device/device.module';
+import { KeyAuthorizationModule } from '../key-authorization/key-authorization.module';
+
+@Module({
+  imports: [KeyModule, ReaderModule, DeviceModule, KeyAuthorizationModule, KeyModule],
+  controllers: [AccessController],
+  providers: [AccessService],
+})
+export class AccessModule {}

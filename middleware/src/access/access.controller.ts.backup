@@ -1,0 +1,23 @@
+import { Controller } from '@nestjs/common';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import { AccessService } from './access.service';
+import { ACCESS_GRANT_CMD, DOOR_TRIGGER_OPEN_CMD } from '@siam/common'; 
+import { LoggerService } from '@siam/types';
+
+
+@Controller()
+export class AccessController {
+  constructor(private readonly accessService: AccessService, private readonly logger: LoggerService) {}
+
+  @MessagePattern({ cmd: ACCESS_GRANT_CMD })
+  async grantAccess(@Payload() data: { userId: number; doorId: number }) {
+    this.logger.log(`Middleware: Processing Grant Access for User ${data.userId} Door ${data.doorId}`);
+    return await this.accessService.grantAccess(data.userId, data.doorId);
+  }
+
+  @MessagePattern({ cmd: DOOR_TRIGGER_OPEN_CMD })
+  async triggerDoorOpen(@Payload() data: { doorId: number }) {
+    this.logger.log(`Middleware: Processing Trigger Open Door for Door ${data.doorId}`);
+    return await this.accessService.triggerDoorOpen(data.doorId);
+  }
+}

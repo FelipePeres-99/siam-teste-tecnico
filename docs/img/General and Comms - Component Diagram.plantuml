@@ -1,0 +1,56 @@
+@startuml
+skinparam componentStyle uml2
+left to right direction
+
+' Define Colors (without the #)
+!define DB_COLOR DeepSkyBlue
+!define CACHE_COLOR OrangeRed
+!define BROKER_COLOR LimeGreen
+
+' Infrastructure Styling
+skinparam database {
+    BackgroundColor<<DB>> #DB_COLOR
+    BackgroundColor<<Cache>> #CACHE_COLOR
+}
+skinparam queue {
+    BackgroundColor<<Broker>> #BROKER_COLOR
+}
+
+actor "Frontend / Mobile" as Client
+actor "Physical Door" as Hardware
+
+package "SIAM Services" {
+    component "API Service" as Api
+    component "Middleware" as Mw
+    component "Device-Comm" as Dev
+}
+
+package "Infrastructure" {
+    database "PostgreSQL" as DB <<DB>>
+    database "Redis" as Cache <<Cache>>
+    queue "RabbitMQ" as Broker <<Broker>>
+}
+
+' --- COLOR CODED FLOWS ---
+
+' API only reads from Cache
+Api -[#CACHE_COLOR]-> Cache : "<color:#CACHE_COLOR>Read</color>"
+
+' Middleware manages both
+Mw -[#DB_COLOR]-> DB : "<color:#DB_COLOR>CRUD</color>"
+Mw -[#CACHE_COLOR]-> Cache : "<color:#CACHE_COLOR>Write</color>"
+
+' Communication Spine
+Mw -[#BROKER_COLOR]-> Broker : "<color:#BROKER_COLOR>Emit Events</color>"
+Api -[#BROKER_COLOR]-> Broker : "<color:#BROKER_COLOR>Emit Events</color>"
+Broker -[#BROKER_COLOR]-> Dev : "<color:#BROKER_COLOR>Consume</color>"
+
+' External
+Client --> Api : "REST (HTTP)"
+Dev --> Hardware : "TCP/HTTP"
+
+' Layout help to stack services vertically
+'Api -[hidden]down- Mw
+'Mw -[hidden]down- Dev
+
+@enduml
